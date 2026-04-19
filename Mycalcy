@@ -1,0 +1,362 @@
+import tkinter as tk
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+import statistics
+
+# ================= WINDOW =================
+root = tk.Tk()
+root.title("Calcynova 🔥")
+root.geometry("350x700")
+root.config(bg="#1e1e1e")
+
+# ================= DISPLAY =================
+entry = tk.Entry(root, width=22, font=("Calibri", 22), bd=5,
+                 relief="groove", justify="right",
+                 bg="#f0f0f0", fg="#333333", insertbackground="black")
+entry.grid(row=0, column=0, columnspan=4, padx=4, pady=20)
+
+
+#basic_frame = tk.Frame(root, bg="#1e1e1e")
+#adv_frame = tk.Frame(root, bg="#1e1e1e")
+#
+#basic_frame.grid(row=2, column=0, columnspan=4)
+#adv_frame.grid(row=3, column=0, columnspan=4)
+
+def show_basic():
+    adv_frame.grid_remove()
+    basic_frame.grid()
+
+def show_advanced():
+    basic_frame.grid()
+    adv_frame.grid()
+
+
+# ================= DATA =================
+history = []
+memory = 0
+
+# ================= FUNCTIONS =================
+def click(value):
+    entry.insert(tk.END, value)
+
+def clear():
+    entry.delete(0, tk.END)
+
+def backspace():
+    if entry.get():
+        entry.delete(len(entry.get())-1)
+
+def calculate():
+    try:
+        expression = entry.get()
+        result = eval(expression, {"__builtins__": None}, {
+            "sin": math.sin,
+            "cos": math.cos,
+            "tan": math.tan,
+            "sqrt": math.sqrt,
+            "log": math.log10,
+            "ln": math.log,
+            "pi": math.pi,
+            "e": math.e
+        })
+
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, result)
+
+        history.append(f"{expression} = {result}")
+
+    except:
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, "Error")
+
+# ================= MEMORY =================
+def memory_add():
+    global memory
+    try:
+        memory += float(entry.get())
+    except:
+        pass
+
+def memory_sub():
+    global memory
+    try:
+        memory -= float(entry.get())
+    except:
+        pass
+
+def memory_recall():
+    entry.delete(0, tk.END)
+    entry.insert(tk.END, memory)
+
+def memory_clear():
+    global memory
+    memory = 0
+
+# ================= HISTORY ===================
+def show_history():
+    win = tk.Toplevel(root)
+    win.title("History")
+    win.geometry("300x300")
+
+    for item in history:
+        tk.Label(win, text=item, anchor="w").pack()
+
+#====================Statistics=================
+def get_data():
+    try:
+        data = entry.get().split(",")
+        return [float(i) for i in data]
+    except:
+        return []
+
+def calc_mean():
+    data = get_data()
+    if data:
+        result = statistics.mean(data)
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Mean={round(result,2)}")
+    else:
+        entry.insert(tk.END, "Error")
+
+
+def calc_median():
+    data = get_data()
+    if data:
+        result = statistics.median(data)
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Median={result}")
+    else:
+        entry.insert(tk.END, "Error")
+
+
+def calc_mode():
+    data = get_data()
+    try:
+        result = statistics.mode(data)
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Mode={result}")
+    except:
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, "No Mode")
+
+
+def calc_std():
+    data = get_data()
+    if data:
+        result = statistics.stdev(data)
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Std={round(result,2)}")
+    else:
+        entry.insert(tk.END, "Error")
+
+
+def calc_variance():
+    data = get_data()
+    if data:
+        result = statistics.variance(data)
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Var={round(result,2)}")
+    else:
+        entry.insert(tk.END, "Error")
+
+def calc_correlation():
+    try:
+        text = entry.get()
+
+        x_part, y_part = text.split(";")
+
+        x_vals = [float(i) for i in x_part.split(",")]
+        y_vals = [float(i) for i in y_part.split(",")]
+
+        n = len(x_vals)
+
+        mean_x = sum(x_vals) / n
+        mean_y = sum(y_vals) / n
+
+        num = sum((x_vals[i] - mean_x)*(y_vals[i] - mean_y) for i in range(n))
+
+        den_x = sum((x_vals[i] - mean_x)**2 for i in range(n))
+        den_y = sum((y_vals[i] - mean_y)**2 for i in range(n))
+
+        correlation = num / ((den_x * den_y) ** 0.5)
+
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, f"Corr={round(correlation,2)}")
+
+    except:
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, "Error")
+
+# ================= GRAPH =================
+def plot_graph():
+    try:
+        expr = entry.get()
+
+        # Allow multiple expressions (comma separated)
+        expressions = expr.split(",")
+
+        x = np.linspace(-10, 10, 200)
+        plt.figure()
+
+        for exp in expressions:
+            exp = exp.strip()
+        
+            y = eval(exp, {"__builtins__": None}, {
+                "x": x,
+                "sin": np.sin,
+                "cos": np.cos,
+                "tan": np.tan
+            })
+            plt.plot(x, y, label=exp)
+
+        plt.title("Graph")
+        plt.xlabel("X axis")
+        plt.ylabel("Y axis")
+        #plt.axhline(0)   # X-axis
+        #plt.axvline(0)   # Y-axis
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    except:
+        entry.delete(0, tk.END)
+        entry.insert(tk.END, "Graph Error")
+
+# ================= STYLE =================
+btn_style = {
+    "font": ("Arial", 11),
+    "width": 8,
+    "height": 2,
+    "bd": 4,
+    "fg": "white"
+}
+
+# ================= BASIC BUTTONS =================
+
+buttons = [
+    ('C',1,0,"#A80305"), ('⌫',1,1,"#00b7ff"), ('%',1,2,"#00b7ff"), ('/',1,3,"#00b7ff"),
+    ('7',2,0,"#3c3f41"), ('8',2,1,"#3c3f41"), ('9',2,2,"#3c3f41"), ('*',2,3,"#00b7ff"),
+    ('4',3,0,"#3c3f41"), ('5',3,1,"#3c3f41"), ('6',3,2,"#3c3f41"), ('-',3,3,"#00b7ff"),
+    ('1',4,0,"#3c3f41"), ('2',4,1,"#3c3f41"), ('3',4,2,"#3c3f41"), ('+',4,3,"#00b7ff"),
+    ('0',5,0,"#3c3f41"), ('00',5,1,"#3c3f41"), ('.',5,2,"#3c3f41"), ('=',5,3,"#00b7ff")
+]
+
+for (text, row, col, color) in buttons:
+    if text == "=":
+        cmd = calculate
+    elif text == "C":
+        cmd = clear
+    elif text == "⌫":
+        cmd = backspace
+    else:
+        cmd = lambda t=text: click(t)
+
+    tk.Button(root, text=text, bg=color, command=cmd, **btn_style).grid(row=row, column=col, padx=0, pady=0)
+#=========
+
+#tk.Button(root, text="Basic", bg="#444", command=show_basic).grid(row=1, column=0, columnspan=2, sticky="nsew")
+#tk.Button(root, text="Advanced", bg="#444", command=show_advanced).grid(row=1, column=2, columnspan=2, sticky="nsew")
+
+# ================= MEMORY BUTTONS =================
+tk.Button(root, text="M+", bg="#555", command=memory_add, **btn_style).grid(row=6, column=0)
+tk.Button(root, text="M-", bg="#555", command=memory_sub, **btn_style).grid(row=6, column=1)
+tk.Button(root, text="MR", bg="#555", command=memory_recall, **btn_style).grid(row=6, column=2)
+tk.Button(root, text="MC", bg="#555", command=memory_clear, **btn_style).grid(row=6, column=3)  
+
+# ================= HISTORY =================
+tk.Button(root, text="History", bg="#666", command=show_history, **btn_style).grid(row=7, column=0, columnspan=1)
+
+# Variable x, Parentheses, comma buttons
+
+tk.Button(root, text="(", bg="#555", command=lambda: click("("), **btn_style).grid(row=7, column=1)
+tk.Button(root, text=")", bg="#555", command=lambda: click(")"), **btn_style).grid(row=7, column=2)
+tk.Button(root, text=",", bg="#555", command=lambda: click(","), **btn_style).grid(row=7, column=3)
+
+# ================= SCIENTIFIC =================
+tk.Button(root, text="sin", bg="#444", command=lambda: click("sin("), **btn_style).grid(row=8, column=0, columnspan=1, padx=0, pady=0)
+tk.Button(root, text="cos", bg="#444", command=lambda: click("cos("), **btn_style).grid(row=8, column=1)
+tk.Button(root, text="tan", bg="#444", command=lambda: click("tan("), **btn_style).grid(row=8, column=2)
+tk.Button(root, text="√", bg="#444", command=lambda: click("sqrt("), **btn_style).grid(row=8, column=3)
+
+tk.Button(root, text="log", bg="#444", command=lambda: click("log("), **btn_style).grid(row=9, column=0, columnspan=1, padx=0, pady=0)
+tk.Button(root, text="ln", bg="#444", command=lambda: click("ln("), **btn_style).grid(row=9, column=1)
+tk.Button(root, text="π", bg="#444", command=lambda: click("pi"), **btn_style).grid(row=9, column=2)
+tk.Button(root, text="e", bg="#444", command=lambda: click("e"), **btn_style).grid(row=9, column=3)
+
+tk.Button(root, text="x²", bg="#444", command=lambda: click("**2"), **btn_style).grid(row=10, column=0)
+tk.Button(root, text="xʸ", bg="#444", command=lambda: click("**"), **btn_style).grid(row=10, column=1)
+tk.Button(root, text="x", bg="#444", command=lambda: click("x"), **btn_style).grid(row=10, column=2)
+tk.Button(root, text="Graph", bg="#4C03B9", command=plot_graph, **btn_style).grid(row=10, column=3, columnspan=1)
+
+#=========================Statistics Button============================
+tk.Button(root, text="Mean", bg="#4C03B9", command=calc_mean, **btn_style).grid(row=11, column=0)
+tk.Button(root, text="Median", bg="#4C03B9", command=calc_median, **btn_style).grid(row=11, column=1)
+tk.Button(root, text="Mode", bg="#4C03B9", command=calc_mode, **btn_style).grid(row=11, column=2)
+tk.Button(root, text="Std", bg="#4C03B9", command=calc_std, **btn_style).grid(row=11, column=3)
+
+tk.Button(root, text="Var", bg="#4C03B9", command=calc_variance, **btn_style).grid(row=12, column=0,columnspan=1, sticky="nsew")
+tk.Button(root, text="Corr", bg="#4C03B9",command=calc_correlation, **btn_style).grid(row=12, column=1, columnspan=2, sticky="nsew")
+tk.Button(root, text=";", bg="#4C03B9", command=lambda: click(";"), **btn_style).grid(row=12, column=3)
+# tax entry
+#tax_entry = tk.Entry(root, width=10, font=("Arial", 12), justify="center")
+#tax_entry.insert(0, "18")   # default value
+#tax_entry.grid(row=1, column=0, columnspan=2, pady=5)
+#
+#tk.Label(root, text="Tax %", bg="#1e1e1e", fg="white").grid(row=1, column=2)
+#def get_tax_rate():
+#    try:
+#        return float(tax_entry.get())
+#    except:
+#        return 0
+#
+#
+#def tax_plus():
+#    try:
+#        value = float(entry.get())
+#        tax_rate = get_tax_rate()
+#
+#        result = value * (1 + tax_rate / 100)
+#
+#        entry.delete(0, tk.END)
+#        entry.insert(tk.END, round(result, 2))
+#
+#    except:
+#        entry.delete(0, tk.END)
+#        entry.insert(tk.END, "Error")
+#
+#
+#def tax_minus():
+#    try:
+#        value = float(entry.get())
+#        tax_rate = get_tax_rate()
+#
+#        result = value / (1 + tax_rate / 100)
+#
+#        entry.delete(0, tk.END)
+#        entry.insert(tk.END, round(result, 2))
+#
+#    except:
+#        entry.delete(0, tk.END)
+#        entry.insert(tk.END, "Error")
+
+# ================= KEYBOARD =================
+def key_input(event):
+    key = event.char
+
+    if key in "0123456789+-*/.%":
+        click(key)
+    elif event.keysym == "Return":
+        calculate()
+    elif event.keysym == "BackSpace":
+        backspace()
+    elif event.keysym == "Escape":
+        clear()
+
+#root.bind("<Key>", key_input)
+root.bind("<Return>", lambda e: calculate())
+root.bind("<BackSpace>", lambda e: backspace())
+root.bind("<Escape>", lambda e: clear())
+
+# ================= RUN =================
+root.mainloop()
